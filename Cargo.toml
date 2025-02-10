@@ -1,0 +1,10 @@
+[package]
+name = "plonk_kzg_we"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main" }
+halo2_middleware = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main" }
+halo2_backend = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main" }
+rand = "0.8"

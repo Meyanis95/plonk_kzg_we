@@ -1,5 +1,12 @@
 use halo2_backend::multicore;
-use halo2_proofs::{arithmetic::Field, halo2curves::bn256::Fr};
+use halo2_middleware::ff;
+use halo2_proofs::{
+    arithmetic::Field,
+    halo2curves::{
+        bn256::Fq,
+        ff_ext::{cubic::CubicExtField, quadratic::QuadExtField},
+    },
+};
 
 pub fn poly_divide<Fr: Field>(poly: &[Fr], c: Fr, f_c: Fr) -> Vec<Fr> {
     // poly: coefficients [a0, a1, ..., a_{n-1}] of f(x)
@@ -49,4 +56,23 @@ pub fn eval_polynomial<Fr: Field>(poly: &[Fr], point: Fr) -> Fr {
         });
         parts.iter().fold(Fr::ZERO, |acc, coeff| acc + coeff)
     }
+}
+
+// Serialize a quadratic extension field element.
+pub fn serialize_quad_ext_field(quad: &QuadExtField<Fq>) -> Vec<u8> {
+    let mut out = Vec::new();
+    // Append the serialization of the two field components.
+    out.extend_from_slice(quad.c0().to_bytes().as_ref());
+    out.extend_from_slice(quad.c1().to_bytes().as_ref());
+    out
+}
+
+// Serialize a cubic extension field element.
+pub fn serialize_cubic_ext_field(cubic: &CubicExtField<QuadExtField<Fq>>) -> Vec<u8> {
+    let mut out = Vec::new();
+    // The CubicExtField is assumed to have three components: c0, c1, c2.
+    out.extend_from_slice(&serialize_quad_ext_field(cubic.c0()));
+    out.extend_from_slice(&serialize_quad_ext_field(cubic.c1()));
+    out.extend_from_slice(&serialize_quad_ext_field(cubic.c2()));
+    out
 }

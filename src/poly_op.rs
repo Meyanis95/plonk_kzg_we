@@ -1,5 +1,4 @@
-use halo2_backend::multicore;
-use halo2_middleware::ff;
+use halo2_middleware::multicore;
 use halo2_proofs::{
     arithmetic::Field,
     halo2curves::{

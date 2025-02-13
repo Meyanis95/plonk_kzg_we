@@ -248,7 +248,6 @@ dependencies = [
 [[package]]
 name = "halo2_backend"
 version = "0.4.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2.git?branch=main#3d304769afc90be1ebc81849dcfd4448571613a7"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -278,7 +277,6 @@ dependencies = [
 [[package]]
 name = "halo2_middleware"
 version = "0.4.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2.git?branch=main#3d304769afc90be1ebc81849dcfd4448571613a7"
 dependencies = [
  "ff",
  "halo2curves",

@@ -6,10 +6,16 @@ edition = "2021"
 [dependencies]
 halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main", features = ["derive_serde"] }
 halo2_middleware = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main" }
-halo2_backend = { git = "https://github.com/privacy-scaling-explorations/halo2.git", branch = "main" } 
+halo2_backend = { path = "../halo2/halo2_backend" }
 rand = "0.8"
 blake3 = "1.5.5"
 bincode = "1.3.3"
 
+[patch."https://github.com/privacy-scaling-explorations/halo2.git"]
+halo2_backend = { path = "../halo2/halo2_backend" }
+halo2_middleware = { path = "../halo2/halo2_middleware" }  # Force all to use your local version
+
 [patch.crates-io]
 halo2curves = { path = "../halo2curves" }
+halo2_backend = { path = "../halo2/halo2_backend" }
+halo2_middleware = { path = "../halo2/halo2_middleware" }

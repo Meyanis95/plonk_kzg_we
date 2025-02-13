@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+use halo2_backend::poly::kzg::commitment::ParamsKZG;
 use halo2_backend::poly::{Coeff, Polynomial};
 use halo2_middleware::zal::impls::PlonkEngineConfig;
 use halo2_proofs::arithmetic::Field;
@@ -9,7 +10,6 @@ use halo2_proofs::halo2curves::ff_ext::quadratic::QuadExtField;
 use halo2_proofs::halo2curves::group::Curve;
 use halo2_proofs::halo2curves::pairing::Engine;
 use halo2_proofs::poly::commitment::{Blind, Params, ParamsProver};
-use halo2_proofs::poly::kzg::commitment::ParamsKZG;
 use halo2_proofs::poly::EvaluationDomain;
 use rand::rngs::OsRng;
 
@@ -51,7 +51,7 @@ impl Choice {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LaconicOTRecv {
     params: ParamsKZG<Bn256>,
     qs: Vec<G1>,
@@ -60,15 +60,16 @@ pub struct LaconicOTRecv {
     domain: EvaluationDomain<Fr>,
 }
 
+#[derive(Debug, Clone)]
 pub struct LaconicOTSender {
     params: ParamsKZG<Bn256>,
     com: G1,
+    domain: EvaluationDomain<Fr>,
 }
 
 impl LaconicOTRecv {
-    pub fn new(bits: &[Choice], k: u32, message_length: u32) -> Self {
+    pub fn new(bits: &[Choice], k: u32) -> Self {
         let params: ParamsKZG<Bn256> = ParamsKZG::setup(k, &mut OsRng);
-        let laconic_ot_domain: EvaluationDomain<Fr> = EvaluationDomain::new(1, message_length);
 
         let elems: Vec<_> = bits
             .iter()
@@ -141,7 +142,7 @@ impl LaconicOTRecv {
             qs,
             com: commitment.into(),
             bits: bits.to_vec(),
-            domain: laconic_ot_domain,
+            domain,
         }
     }
 
@@ -182,8 +183,12 @@ fn decrypt<const N: usize>(pad: Gt, ct: &[u8; N]) -> [u8; N] {
 }
 
 impl LaconicOTSender {
-    pub fn new(params: ParamsKZG<Bn256>, com: G1) -> Self {
-        Self { params, com }
+    pub fn new(params: ParamsKZG<Bn256>, com: G1, domain: EvaluationDomain<Fr>) -> Self {
+        Self {
+            params,
+            com,
+            domain,
+        }
     }
 
     pub fn send<R: Rng>(
@@ -193,21 +198,24 @@ impl LaconicOTSender {
         m0: [u8; MSG_SIZE],
         m1: [u8; MSG_SIZE],
     ) -> Msg<G2Affine> {
-        let x = Fr::random(rng);
-        let r0 = Fr::random(rng);
-        let r1 = Fr::random(rng);
+        let x = self.domain.get_omega().pow_vartime([i as u64]);
+        let r0 = Fr::random(&mut *rng);
+        let r1 = Fr::random(&mut *rng);
 
         let g1 = self.params.g[0];
         let g2 = self.params.g2;
-        let tau = self.ck.s_g2;
+        let tau = self.params.s_g2;
 
         // y = 0/1
         let l0 = self.com * r0; // r * (c - [y])
         let l1 = (self.com - g1) * r1; // r * (c - [y])
 
+        let l0_affine = l0.to_affine();
+        let l1_affine = l1.to_affine();
+
         // m0, m1
-        let msk0 = <Bn256 as Engine>::pairing(&l0, self.params.g2);
-        let msk1 = <Bn256 as Engine>::pairing(&l1, self.params.g2);
+        let msk0 = <Bn256 as Engine>::pairing(&l0_affine, &self.params.g2);
+        let msk1 = <Bn256 as Engine>::pairing(&l1_affine, &self.params.g2);
 
         // h0, h1
         let cm = Into::<G2>::into(tau) - g2 * x;
@@ -222,6 +230,28 @@ impl LaconicOTSender {
             ],
         }
     }
+}
+
+#[test]
+fn test_laconic_ot() {
+    let rng = &mut OsRng;
+
+    let degree = 4;
+    let bitvector = [Choice::Zero, Choice::One, Choice::Zero, Choice::One];
+
+    let receiver = LaconicOTRecv::new(&bitvector, degree);
+
+    let sender = LaconicOTSender::new(
+        receiver.params.clone(),
+        receiver.commitment(),
+        receiver.domain.clone(),
+    );
+
+    let m0 = [0u8; MSG_SIZE];
+    let m1 = [1u8; MSG_SIZE];
+    let msg = sender.send(rng, 0, m0, m1);
+    let res = receiver.recv(0, msg);
+    assert_eq!(res, m0);
 }
 
 fn main() {

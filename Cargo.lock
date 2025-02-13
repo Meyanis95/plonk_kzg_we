@@ -248,6 +248,7 @@ dependencies = [
 [[package]]
 name = "halo2_backend"
 version = "0.4.0"
+source = "git+https://github.com/Meyanis95/halo2.git?branch=main#785a5890b51c8d5051d3d456b62e775db2a86425"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -264,7 +265,7 @@ dependencies = [
 [[package]]
 name = "halo2_frontend"
 version = "0.4.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2.git?branch=main#3d304769afc90be1ebc81849dcfd4448571613a7"
+source = "git+https://github.com/Meyanis95/halo2.git?branch=main#785a5890b51c8d5051d3d456b62e775db2a86425"
 dependencies = [
  "blake2b_simd",
  "ff",
@@ -277,6 +278,7 @@ dependencies = [
 [[package]]
 name = "halo2_middleware"
 version = "0.4.0"
+source = "git+https://github.com/Meyanis95/halo2.git?branch=main#785a5890b51c8d5051d3d456b62e775db2a86425"
 dependencies = [
  "ff",
  "halo2curves",
@@ -286,7 +288,7 @@ dependencies = [
 [[package]]
 name = "halo2_proofs"
 version = "0.4.0"
-source = "git+https://github.com/privacy-scaling-explorations/halo2.git?branch=main#3d304769afc90be1ebc81849dcfd4448571613a7"
+source = "git+https://github.com/Meyanis95/halo2.git?branch=main#785a5890b51c8d5051d3d456b62e775db2a86425"
 dependencies = [
  "group",
  "halo2_backend",
@@ -299,6 +301,7 @@ dependencies = [
 [[package]]
 name = "halo2curves"
 version = "0.7.0"
+source = "git+https://github.com/Meyanis95/halo2curves.git?branch=main#d72dc80b8ca5d0cd10d352d1995c2b93c7a29802"
 dependencies = [
  "blake2",
  "digest 0.10.7",
@@ -326,6 +329,7 @@ dependencies = [
 [[package]]
 name = "halo2derive"
 version = "0.1.0"
+source = "git+https://github.com/Meyanis95/halo2curves.git?branch=main#d72dc80b8ca5d0cd10d352d1995c2b93c7a29802"
 dependencies = [
  "num-bigint",
  "num-integer",
@@ -435,6 +439,7 @@ dependencies = [
  "halo2_backend",
  "halo2_middleware",
  "halo2_proofs",
+ "halo2curves",
  "rand",
 ]
 

@@ -1,10 +1,8 @@
 use halo2_middleware::multicore;
-use halo2_proofs::{
-    arithmetic::Field,
-    halo2curves::{
-        bn256::Fq,
-        ff_ext::{cubic::CubicExtField, quadratic::QuadExtField},
-    },
+use halo2_proofs::arithmetic::Field;
+use halo2curves::{
+    bn256::Fq,
+    ff_ext::{cubic::CubicExtField, quadratic::QuadExtField},
 };
 
 pub fn poly_divide<Fr: Field>(poly: &[Fr], c: Fr, f_c: Fr) -> Vec<Fr> {

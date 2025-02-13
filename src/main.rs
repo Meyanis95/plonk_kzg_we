@@ -1,19 +1,21 @@
 use std::marker::PhantomData;
 
-use halo2_backend::poly::kzg::commitment::ParamsKZG;
-use halo2_backend::poly::{Coeff, Polynomial};
+use halo2_backend::poly::{kzg::commitment::ParamsKZG, Coeff, Polynomial};
 use halo2_middleware::zal::impls::PlonkEngineConfig;
-use halo2_proofs::arithmetic::Field;
-use halo2_proofs::halo2curves::bn256::{Bn256, Fq, Fr, G1Affine, G2Affine, Gt, G1, G2};
-use halo2_proofs::halo2curves::ff_ext::cubic::CubicExtField;
-use halo2_proofs::halo2curves::ff_ext::quadratic::QuadExtField;
-use halo2_proofs::halo2curves::group::Curve;
-use halo2_proofs::halo2curves::pairing::Engine;
-use halo2_proofs::poly::commitment::{Blind, Params, ParamsProver};
-use halo2_proofs::poly::EvaluationDomain;
-use rand::rngs::OsRng;
-
+use halo2_proofs::{
+    arithmetic::Field,
+    halo2curves::bn256::{Bn256, Fq, Fr, G1Affine, G2Affine, G1, G2},
+    halo2curves::ff_ext::{cubic::CubicExtField, quadratic::QuadExtField},
+    halo2curves::group::Curve,
+    halo2curves::pairing::Engine,
+    poly::{
+        commitment::{Blind, Params, ParamsProver},
+        EvaluationDomain,
+    },
+};
+use halo2curves::bn256::Gt;
 use plonk_kzg_we::{eval_polynomial, poly_divide, serialize_cubic_ext_field};
+use rand::rngs::OsRng;
 use rand::Rng;
 
 const MSG_SIZE: usize = 32;

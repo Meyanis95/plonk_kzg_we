@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use halo2_backend::poly::{Coeff, Polynomial};
 use halo2_middleware::zal::impls::PlonkEngineConfig;
 use halo2_proofs::arithmetic::Field;
-use halo2_proofs::halo2curves::bn256::{Bn256, Fq, Fr, G1Affine, G2Affine, Gt, G1};
+use halo2_proofs::halo2curves::bn256::{Bn256, Fq, Fr, G1Affine, G2Affine, Gt, G1, G2};
 use halo2_proofs::halo2curves::ff_ext::cubic::CubicExtField;
 use halo2_proofs::halo2curves::ff_ext::quadratic::QuadExtField;
 use halo2_proofs::halo2curves::group::Curve;
@@ -14,6 +14,7 @@ use halo2_proofs::poly::EvaluationDomain;
 use rand::rngs::OsRng;
 
 use plonk_kzg_we::{eval_polynomial, poly_divide, serialize_cubic_ext_field};
+use rand::Rng;
 
 const MSG_SIZE: usize = 32;
 
@@ -56,11 +57,18 @@ pub struct LaconicOTRecv {
     qs: Vec<G1>,
     com: G1,
     bits: Vec<Choice>,
+    domain: EvaluationDomain<Fr>,
+}
+
+pub struct LaconicOTSender {
+    params: ParamsKZG<Bn256>,
+    com: G1,
 }
 
 impl LaconicOTRecv {
-    pub fn new(bits: &[Choice], k: u32) -> Self {
+    pub fn new(bits: &[Choice], k: u32, message_length: u32) -> Self {
         let params: ParamsKZG<Bn256> = ParamsKZG::setup(k, &mut OsRng);
+        let laconic_ot_domain: EvaluationDomain<Fr> = EvaluationDomain::new(1, message_length);
 
         let elems: Vec<_> = bits
             .iter()
@@ -133,6 +141,7 @@ impl LaconicOTRecv {
             qs,
             com: commitment.into(),
             bits: bits.to_vec(),
+            domain: laconic_ot_domain,
         }
     }
 
@@ -170,6 +179,49 @@ fn encrypt<const N: usize>(pad: Gt, msg: &[u8; N]) -> [u8; N] {
 
 fn decrypt<const N: usize>(pad: Gt, ct: &[u8; N]) -> [u8; N] {
     encrypt::<N>(pad, ct)
+}
+
+impl LaconicOTSender {
+    pub fn new(params: ParamsKZG<Bn256>, com: G1) -> Self {
+        Self { params, com }
+    }
+
+    pub fn send<R: Rng>(
+        &self,
+        rng: &mut R,
+        i: usize,
+        m0: [u8; MSG_SIZE],
+        m1: [u8; MSG_SIZE],
+    ) -> Msg<G2Affine> {
+        let x = Fr::random(rng);
+        let r0 = Fr::random(rng);
+        let r1 = Fr::random(rng);
+
+        let g1 = self.params.g[0];
+        let g2 = self.params.g2;
+        let tau = self.ck.s_g2;
+
+        // y = 0/1
+        let l0 = self.com * r0; // r * (c - [y])
+        let l1 = (self.com - g1) * r1; // r * (c - [y])
+
+        // m0, m1
+        let msk0 = <Bn256 as Engine>::pairing(&l0, self.params.g2);
+        let msk1 = <Bn256 as Engine>::pairing(&l1, self.params.g2);
+
+        // h0, h1
+        let cm = Into::<G2>::into(tau) - g2 * x;
+        let h0: G2 = cm * r0;
+        let h1: G2 = cm * r1;
+
+        // encapsulate the messages
+        Msg {
+            h: [
+                (h0.into(), encrypt::<MSG_SIZE>(msk0, &m0)),
+                (h1.into(), encrypt::<MSG_SIZE>(msk1, &m1)),
+            ],
+        }
+    }
 }
 
 fn main() {
